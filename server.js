@@ -3,6 +3,8 @@ var app = express()
 const fs = require("fs");
 const request = require('request');
 var jwt = require('jsonwebtoken');
+const path = require("path");
+const { cwd } = require('process');
 
 
 
@@ -63,22 +65,52 @@ app.get('/Models/:id', function (req, res) {
 });
 
 
-app.get('/list-files', function (req, res) {
-     
-         var arr = []
-         var hh = fs.readdirSync(ModelsFolder).forEach(file => {
-            arr.push(file)
-            console.log("*******************", file)
-            res.send(arr)
-            })
+app.get('/list', function (req, res) {
+
+   const getAllFiles = function (dirPath, arrayOfFiles) {
+      files = fs.readdirSync(dirPath)
+
+      arrayOfFiles = arrayOfFiles || []
+
+      files.forEach(function (file) {
+         if (fs.statSync(dirPath + "/" + file).isDirectory()) {
+            arrayOfFiles = getAllFiles(dirPath + "/" + file, arrayOfFiles)
+         } else {
+            arrayOfFiles.push(path.join(__dirname, dirPath, "/", file))
+         }
+      })
+      var value, ar = [];
+      var cw = process.mainModule.filename;
+      t = cw.substr(0, cw.lastIndexOf("/"));
+      console.log(t)
+      arrayOfFiles.forEach(function (value) {
+         value = value.replace(`${t}/Models/`, " ")
+         ar.push(value)
+         console.log(value);
+      });
+
+      return ar
+   }
+
+   const result = getAllFiles("./Models")
+   res.send([result])
+})
+
+
+
+
+
+
 
 
 app.get('/download/:id', function (req, res) {
-      var id = req.params.id;
+   var id = req.params.id;
+   console.log("*****************************", fs.lstatSync(id).isDirectory())
 
-         const file = `${__dirname}/${id}`;
-         console.log("****************** DOWNLOADING", file, "*******************")
-         res.download(file); // Set disposition and send it.
+
+   const file = `${__dirname}/${id}`;
+   console.log("****************** DOWNLOADING", file, "*******************")
+   res.download(file); // Set disposition and send it.
 
 
 
